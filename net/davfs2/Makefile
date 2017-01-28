@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2014 OpenWrt.org
+# Copyright (C) 2006-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=davfs2
-PKG_VERSION:=1.5.2
-PKG_RELEASE:=1
+PKG_VERSION:=1.5.4
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://download.savannah.gnu.org/releases/davfs2/
-PKG_MD5SUM:=376bc9346454135cba78afacbcb23f86
+PKG_MD5SUM:=c9f0b557275b7ec88fec751bf22f30cf
+
+PKG_FIXUP:=gettext-version autoreconf
 
 include $(INCLUDE_DIR)/package.mk
 
@@ -21,7 +23,7 @@ define Package/davfs2
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=Filesystem
-  DEPENDS=+libopenssl +libneon +libiconv +libintl +libexpat +kmod-fuse +libfuse
+  DEPENDS=+libneon +kmod-fuse +libfuse
   TITLE:=Mount a WebDAV resource as a regular file system.
   URL:=http://savannah.nongnu.org/projects/davfs2/
   MAINTAINER:=Federico Di Marco <fededim@gmail.com>
@@ -49,6 +51,8 @@ define Package/davfs2/conffiles
 endef
 
 TARGET_CFLAGS += -I$(STAGING_DIR)/usr/include
+
+TARGET_CPPFLAGS += -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE
 
 CONFIGURE_VARS += \
        LDFLAGS="$(TARGET_LDFLAGS) -L$(TOOLCHAIN_DIR)/usr/lib -L$(TOOLCHAIN_DIR)/lib"

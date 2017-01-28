@@ -1,22 +1,23 @@
 #
-# Copyright (C) 2009-2014 OpenWrt.org
-#
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=umurmur
-PKG_VERSION:=0.2.15
+PKG_VERSION:=0.2.16-20161126
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_URL:=git://github.com/fatbob313/umurmur.git
+PKG_SOURCE_URL:=https://github.com/umurmur/umurmur.git
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_VERSION:=f66c0c3d630aaff1c4d589bc4d884067f00b6529
+PKG_SOURCE_VERSION:=fac630135664fda26338d403041b6b6e558a2d6b
+PKG_MIRROR_MD5SUM:=0e031baa5cebcdb4eb39a0cde572014f
+PKG_MIRROR_HASH:=6773aebea9aea355a41425e946291bb47bc399f85483bd6532cf26dfc7c801e5
 
 PKG_INSTALL:=1
+PKG_FIXUP:=autoreconf
 
 PKG_MAINTAINER:=Martin Johansson <martin@fatbob.nu>
 PKG_LICENSE:=BSD-3-Clause
@@ -31,8 +32,7 @@ define Package/umurmur/Default
   SUBMENU:=Instant Messaging
   TITLE:=uMurmur
   DEPENDS:=+libconfig +libprotobuf-c
-  URL:=http://code.google.com/p/umurmur
-  MAINTAINER:=Martin Johansson <martin@fatbob.nu>
+  URL:=http://umurmur.net
 endef
 
 define Package/umurmur/Default/description
@@ -51,16 +51,16 @@ define Package/umurmur-openssl/description
   Uses OpenSSL library for SSL and crypto.
 endef
 
-define Package/umurmur-polarssl
+define Package/umurmur-mbedtls
   $(call Package/umurmur/Default)
-  TITLE+= (with PolarSSL support)
-  DEPENDS+= +libpolarssl
-  VARIANT:=polarssl
+  TITLE+= (with mbed TLS support)
+  DEPENDS+= +libmbedtls
+  VARIANT:=mbedtls
 endef
 
-define Package/umurmur-polarssl/description
+define Package/umurmur-mbedtls/description
   $(call Package/umurmur/Default/description)
-  Uses the PolarSSL library for SSL and crypto.
+  Uses the mbed TLS library for SSL and crypto.
 endef
 
 define Build/Compile
@@ -70,16 +70,11 @@ define Build/Compile
 	$(MAKE) -C $(PKG_BUILD_DIR)/src all
 endef
 
-define Build/Configure
-	cd $(PKG_BUILD_DIR) && ./autogen.sh
-	$(call Build/Configure/Default)
-endef
-
 define Package/umurmur-openssl/conffiles
 /etc/umurmur.conf
 endef
 
-Package/umurmur-polarssl/conffiles = $(Package/umurmur-openssl/conffiles)
+Package/umurmur-mbedtls/conffiles = $(Package/umurmur-openssl/conffiles)
 
 define Package/umurmur-openssl/install
 	$(INSTALL_DIR) $(1)/usr/bin
@@ -91,17 +86,17 @@ define Package/umurmur-openssl/install
 	$(INSTALL_DIR) $(1)/etc/umurmur
 endef
 
-Package/umurmur-polarssl/install = $(Package/umurmur-openssl/install)
+Package/umurmur-mbedtls/install = $(Package/umurmur-openssl/install)
 
 ifeq ($(BUILD_VARIANT),openssl)
   CONFIGURE_ARGS += \
 	--with-ssl=openssl
 endif
 
-ifeq ($(BUILD_VARIANT),polarssl)
+ifeq ($(BUILD_VARIANT),mbedtls)
   CONFIGURE_ARGS += \
-	--with-ssl=polarssl
+	--with-ssl=mbedtls
 endif
 
 $(eval $(call BuildPackage,umurmur-openssl))
-$(eval $(call BuildPackage,umurmur-polarssl))
+$(eval $(call BuildPackage,umurmur-mbedtls))

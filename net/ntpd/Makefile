@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2014 OpenWrt.org
+# Copyright (C) 2006-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,17 +8,15 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=ntp
-PKG_VERSION:=4.2.8
-PKG_RELEASE:=1
+PKG_VERSION:=4.2.8p9
+PKG_RELEASE:=2
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://www.eecis.udel.edu/~ntp/ntp_spool/ntp4/ntp-4.2/
-PKG_MD5SUM:=6972a626be6150db8cfbd0b63d8719e7
+PKG_HASH:=b724287778e1bac625b447327c9851eedef020517a3545625e9f652a90f30b72
 
 PKG_LICENSE:=Unique
 PKG_LICENSE_FILES:=COPYRIGHT html/copyright.html
-
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
 
 PKG_FIXUP:=autoreconf
 PKG_LIBTOOL_PATHS:=. sntp
@@ -33,7 +31,7 @@ define Package/ntpd/Default
   TITLE:=ISC ntp
   MAINTAINER:=Peter Wagner <tripolar@gmx.at>
   URL:=http://www.ntp.org/
-  DEPENDS:=+libcap
+  DEPENDS:=+libopenssl +libpthread +libcap
 endef
 
 define Package/ntpd/Default/description
@@ -45,8 +43,6 @@ endef
 define Package/ntpd
 $(call Package/ntpd/Default)
   TITLE+= server
-  USERID:=ntp=123:ntp=123
-  DEPENDS+= +libopenssl +libpthread
   USERID:=ntp=123:ntp=123
 endef
 
@@ -70,7 +66,6 @@ endef
 define Package/ntp-utils
 $(call Package/ntpd/Default)
   TITLE+= utilities
-  DEPENDS+= +libpthread +libopenssl
 endef
 
 define Package/ntp-utils/description
@@ -82,7 +77,7 @@ endef
 define Package/ntp-keygen
 $(call Package/ntpd/Default)
   TITLE+=keygen
-  DEPENDS+= +libopenssl +libpthread
+  DEPENDS+= +libevent2-core
 endef
 
 define Package/ntp-keygen/description
@@ -98,7 +93,9 @@ endef
 CONFIGURE_VARS += \
 	ac_cv_header_md5_h=no \
 	ac_cv_lib_rt_sched_setscheduler=no \
-	ac_cv_header_dns_sd_h=no
+	ac_cv_header_dns_sd_h=no \
+	hw_cv_func_snprintf_c99=yes \
+	hw_cv_func_vsnprintf_c99=yes \
 
 CONFIGURE_ARGS += \
 	--disable-all-clocks \
@@ -108,6 +105,7 @@ CONFIGURE_ARGS += \
 	--enable-NMEA \
 	--enable-LOCAL-CLOCK \
 	--enable-SHM \
+	--enable-ATOM \
 	--enable-linuxcaps \
 	--with-yielding-select=yes \
 	--with-crypto \
@@ -117,6 +115,9 @@ CONFIGURE_ARGS += \
 define Package/ntpd/install
 	$(INSTALL_DIR) $(1)/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ntpd/ntpd $(1)/sbin/
+	$(INSTALL_DIR) $(1)/usr/sbin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ntpq/ntpq $(1)/usr/sbin/
+	$(INSTALL_BIN) ./files/ntpd.hotplug-helper $(1)/usr/sbin/
 	$(INSTALL_DIR) $(1)/etc
 	$(INSTALL_CONF) ./files/ntp.conf $(1)/etc/
 	$(INSTALL_DIR) $(1)/etc/init.d
@@ -137,9 +138,6 @@ define Package/ntpd/postrm
 exit 0
 endef
 
-Package/ntpd-ssl/conffiles = $(Package/ntpd/conffiles)
-Package/ntpd-ssl/install = $(Package/ntpd/install)
-
 define Package/ntpdate/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ntpdate/ntpdate $(1)/usr/sbin/
@@ -150,7 +148,6 @@ endef
 define Package/ntp-utils/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ntpdc/ntpdc $(1)/usr/sbin/
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/ntpq/ntpq $(1)/usr/sbin/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/util/ntptime $(1)/usr/sbin/
 endef
 
@@ -158,8 +155,6 @@ define Package/ntp-keygen/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/util/ntp-keygen $(1)/usr/sbin/
 endef
-
-Package/ntp-keygen-ssl/install = $(Package/ntp-keygen/install)
 
 $(eval $(call BuildPackage,ntpd))
 $(eval $(call BuildPackage,ntpdate))

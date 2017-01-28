@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2014 OpenWrt.org
+# Copyright (C) 2007-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,15 +9,16 @@ include $(TOPDIR)/rules.mk
 
 # Make sure to also update the dbus-x package
 PKG_NAME:=dbus
-PKG_VERSION:=1.9.4
+PKG_VERSION:=1.10.4
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://dbus.freedesktop.org/releases/dbus/
-PKG_MD5SUM:=beee7886e478911ff942a80e4afec303
+PKG_MD5SUM:=27b8e99ffad603b8acfa25201c6e3d5c
 PKG_MAINTAINER:=Steven Barth <cyrus@openwrt.org>
 PKG_LICENSE:=AFL-2.1
 
+PKG_BUILD_PARALLEL:=1
 PKG_FIXUP:=autoreconf
 PKG_INSTALL:=1
 
@@ -26,7 +27,6 @@ include $(INCLUDE_DIR)/package.mk
 
 TARGET_LDFLAGS+= \
 	-Wl,-rpath-link=$(STAGING_DIR)/usr/lib \
-	-Wl,-rpath=/usr/lib/
 
 define Package/dbus/Default
   SECTION:=utils
@@ -122,11 +122,11 @@ HOST_CONFIGURE_ARGS+= \
 	--disable-verbose-mode \
 	--disable-xml-docs \
 	--with-dbus-user=root \
-	--with-dbus-daemondir="$(STAGIND_DIR_HOST)/bin" \
-	--with-system-socket="$(STAGING_DIR_HOST)/var/run/dbus/system_bus_socket" \
-	--with-system-pid-file="$(STAGING_DIR_HOST)/var/run/dbus.pid" \
+	--with-dbus-daemondir="$(STAGING_DIR_HOSTPKG)/bin" \
+	--with-system-socket="$(STAGING_DIR_HOSTPKG)/var/run/dbus/system_bus_socket" \
+	--with-system-pid-file="$(STAGING_DIR_HOSTPKG)/var/run/dbus.pid" \
 	--without-x \
-	--libexecdir="$(STAGING_DIR_HOST)/lib/dbus-1"
+	--libexecdir="$(STAGING_DIR_HOSTPKG)/lib/dbus-1"
 
 HOST_CONFIGURE_VARS+= \
 	ac_cv_have_abstract_sockets="yes" \
@@ -168,10 +168,10 @@ define Package/libdbus/install
 endef
 
 define Package/dbus/install
-	$(INSTALL_DIR) $(1)/etc
+	$(INSTALL_DIR) $(1)/usr/share
 	$(CP) \
-		$(PKG_INSTALL_DIR)/etc/dbus-1 \
-		$(1)/etc/
+		$(PKG_INSTALL_DIR)/usr/share/dbus-1 \
+		$(1)/usr/share/
 
 	$(INSTALL_DIR) $(1)/usr/lib/dbus-1
 	$(INSTALL_BIN) \

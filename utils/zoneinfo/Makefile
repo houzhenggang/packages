@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2014 OpenWrt.org
+# Copyright (C) 2007-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,35 +9,35 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=zoneinfo
-PKG_VERSION:=2014j
-PKG_VERSION_CODE:=2014j
-PKG_RELEASE:=2
+PKG_VERSION:=2016j
+PKG_VERSION_CODE:=2016j
+PKG_RELEASE:=1
 
-#As i couldn't find real license used "Puplic Domain"
+#As i couldn't find real license used "Public Domain"
 #as referense to http://www.iana.org/time-zones/repository/tz-link.html
 PKG_LICENSE:=Public Domain
 
 PKG_SOURCE:=tzdata$(PKG_VERSION).tar.gz
 PKG_SOURCE_CODE:=tzcode$(PKG_VERSION_CODE).tar.gz
 PKG_SOURCE_URL:=http://www.iana.org/time-zones/repository/releases
-PKG_MD5SUM:=2d7ea9c309f0d4e162e426e568290ca3
+PKG_MD5SUM:=db361d005ac8b30a2d18c5ca38d3e8ab
 
 include $(INCLUDE_DIR)/package.mk
 
 define Download/tzcode
    FILE=$(PKG_SOURCE_CODE)
    URL=$(PKG_SOURCE_URL)
-   MD5SUM=970119e9765bc5a9320368851c91ecb6
+   MD5SUM:=0684b98eb184fab250b6ca946862078d
 endef
 
 $(eval $(call Download,tzcode))
 
 define Package/zoneinfo/Default
-  SUBMENU:=zoneinfo
+  SUBMENU:=Zoneinfo
   TITLE:=Zone Information
   SECTION:=utils
   CATEGORY:=Utilities
-  MAINTAINER=Vladimir Ulrich <admin@evl.su>
+  MAINTAINER:=Vladimir Ulrich <admin@evl.su>
 endef
 
 define Package/zoneinfo-core

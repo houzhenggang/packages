@@ -1,22 +1,26 @@
 #
-# Copyright (C) 2007-2014 OpenWrt.org
+# Copyright (C) 2007-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
 #
 
+# NOTE: please DO NOT update this package without the maintainer's consent.
+# See https://github.com/haiwen/seafile/issues/1119
+
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=libevhtp
-PKG_VERSION:=1.2.9
+PKG_VERSION:=1.1.6
 PKG_RELEASE:=1
 PKG_LICENSE:=BSD-3-Clause
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE:=$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/ellzey/libevhtp/archive/
-PKG_MD5SUM:=428a8d179fcc0cadedd914ed6456e08f
-PKG_CAT:=zcat
+PKG_SOURCE_PROTO:=git
+PKG_SOURCE_URL:=https://github.com/ellzey/libevhtp.git
+PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
+PKG_SOURCE_VERSION:=91071e2f20749cd469b87ac2ef1c158dc2a6806f
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
+
 PKG_INSTALL:=1
 
 include $(INCLUDE_DIR)/package.mk
@@ -38,23 +42,10 @@ endef
 
 include $(INCLUDE_DIR)/cmake.mk
 
-Hooks/Prepare/Post += delete_source_package
-
-define delete_source_package
-	# deleting source package as its filename is ambiguous
-	rm -f $(DL_DIR)/$(PKG_SOURCE)
-endef
-
 define Build/InstallDev
 	$(INSTALL_DIR) $(1)/usr/{include,lib}
 	$(CP) $(PKG_INSTALL_DIR)/usr/include/* $(1)/usr/include/
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libevhtp.so* $(1)/usr/lib/
-
-endef
-
-define Package/libevhtp/install
-	$(INSTALL_DIR) $(1)/usr/lib
-	$(CP) $(PKG_INSTALL_DIR)/usr/lib/libevhtp.so* $(1)/usr/lib/
+	$(CP) $(PKG_INSTALL_DIR)/usr/lib/* $(1)/usr/lib/
 endef
 
 $(eval $(call BuildPackage,libevhtp))

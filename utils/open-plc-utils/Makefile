@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2014 OpenWrt.org
+# Copyright (C) 2013-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,14 +8,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=open-plc-utils
-PKG_VERSION:=2013-01-29
+PKG_VERSION:=2017-01-15
 PKG_RELEASE:=$(PKG_SOURCE_VERSION)
 
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=git://github.com/qca/open-plc-utils.git
+PKG_SOURCE_URL:=https://github.com/qca/open-plc-utils.git
 PKG_SOURCE_SUBDIR:=$(PKG_NAME)-$(PKG_VERSION)
-PKG_SOURCE_VERSION:=6beeb6fe6ce2b16b14284c26e1b9220b68044591
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.gz
+PKG_SOURCE_VERSION:=18b7e2a9a17f043fe8ac8b457680aafb1c249c55
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION)-$(PKG_SOURCE_VERSION).tar.xz
 
 PKG_MAINTAINER:=Florian Fainelli <florian@openwrt.org>
 
@@ -87,6 +87,7 @@ define Build/Compile
 endef
 
 define Package/open-plc-utils/install
+	true
 endef
 
 define BuildPlugin

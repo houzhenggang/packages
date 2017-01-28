@@ -3,6 +3,8 @@ module("luci.controller.mwan3", package.seeall)
 sys = require "luci.sys"
 ut = require "luci.util"
 
+ip = "/usr/bin/ip -4 "
+
 function index()
 	if not nixio.fs.access("/etc/config/mwan3") then
 		return
@@ -49,6 +51,8 @@ function index()
 		form("mwan/advanced_mwanconfig"))
 	entry({"admin", "network", "mwan", "advanced", "networkconfig"},
 		form("mwan/advanced_networkconfig"))
+	entry({"admin", "network", "mwan", "advanced", "wirelessconfig"},
+		form("mwan/advanced_wirelessconfig"))
 	entry({"admin", "network", "mwan", "advanced", "diagnostics"},
 		template("mwan/advanced_diagnostics"))
 	entry({"admin", "network", "mwan", "advanced", "diagnostics_display"},
@@ -60,9 +64,9 @@ function index()
 end
 
 function getInterfaceStatus(ruleNumber, interfaceName)
-	if ut.trim(sys.exec("uci get -p /var/state mwan3." .. interfaceName .. ".enabled")) == "1" then
-		if ut.trim(sys.exec("ip route list table " .. ruleNumber)) ~= "" then
-			if ut.trim(sys.exec("uci get -p /var/state mwan3." .. interfaceName .. ".track_ip")) ~= "" then
+	if ut.trim(sys.exec("uci -p /var/state get mwan3." .. interfaceName .. ".enabled")) == "1" then
+		if ut.trim(sys.exec(ip .. "route list table " .. ruleNumber)) ~= "" then
+			if ut.trim(sys.exec("uci -p /var/state get mwan3." .. interfaceName .. ".track_ip")) ~= "" then
 				return "online"
 			else
 				return "notMonitored"
@@ -98,7 +102,7 @@ function interfaceStatus()
 		wansid = {}
 
 		for wanName, interfaceState in string.gfind(statusString, "([^%[]+)%[([^%]]+)%]") do
-			local wanInterfaceName = ut.trim(sys.exec("uci get -p /var/state network." .. wanName .. ".ifname"))
+			local wanInterfaceName = ut.trim(sys.exec("uci -p /var/state get network." .. wanName .. ".ifname"))
 				if wanInterfaceName == "" then
 					wanInterfaceName = "X"
 				end
@@ -159,7 +163,7 @@ function diagnosticsData(interface, tool, task)
 			results = "MWAN3 started"
 		end
 	else
-		local interfaceDevice = ut.trim(sys.exec("uci get -p /var/state network." .. interface .. ".ifname"))
+		local interfaceDevice = ut.trim(sys.exec("uci -p /var/state get network." .. interface .. ".ifname"))
 		if interfaceDevice ~= "" then
 			if tool == "ping" then
 				local gateway = ut.trim(sys.exec("route -n | awk '{if ($8 == \"" .. interfaceDevice .. "\" && $1 == \"0.0.0.0\" && $3 == \"0.0.0.0\") print $2}'"))
@@ -168,7 +172,7 @@ function diagnosticsData(interface, tool, task)
 						local pingCommand = "ping -c 3 -W 2 -I " .. interfaceDevice .. " " .. gateway
 						results = pingCommand .. "\n\n" .. sys.exec(pingCommand)
 					else
-						local tracked = ut.trim(sys.exec("uci get -p /var/state mwan3." .. interface .. ".track_ip"))
+						local tracked = ut.trim(sys.exec("uci -p /var/state get mwan3." .. interface .. ".track_ip"))
 						if tracked ~= "" then
 							for z in tracked:gmatch("[^ ]+") do
 								local pingCommand = "ping -c 3 -W 2 -I " .. interfaceDevice .. " " .. z
@@ -183,8 +187,8 @@ function diagnosticsData(interface, tool, task)
 				end
 			elseif tool == "rulechk" then
 				getInterfaceNumber()
-				local rule1 = sys.exec("ip rule | grep $(echo $((" .. interfaceNumber .. " + 1000)))")
-				local rule2 = sys.exec("ip rule | grep $(echo $((" .. interfaceNumber .. " + 2000)))")
+				local rule1 = sys.exec(ip .. "rule | grep $(echo $((" .. interfaceNumber .. " + 1000)))")
+				local rule2 = sys.exec(ip .. "rule | grep $(echo $((" .. interfaceNumber .. " + 2000)))")
 				if rule1 ~= "" and rule2 ~= "" then
 					results = "All required interface IP rules found:\n\n" .. rule1 .. rule2
 				elseif rule1 ~= "" or rule2 ~= "" then
@@ -194,7 +198,7 @@ function diagnosticsData(interface, tool, task)
 				end
 			elseif tool == "routechk" then
 				getInterfaceNumber()
-				local routeTable = sys.exec("ip route list table " .. interfaceNumber)
+				local routeTable = sys.exec(ip .. "route list table " .. interfaceNumber)
 				if routeTable ~= "" then
 					results = "Interface routing table " .. interfaceNumber .. " was found:\n\n" .. routeTable
 				else
@@ -223,16 +227,18 @@ function diagnosticsData(interface, tool, task)
 end
 
 function troubleshootingData()
+	local ver = require "luci.version"
+
 	local mArray = {}
 
 	-- software versions
-	local wrtRelease = ut.trim(luci.version.distversion)
+	local wrtRelease = ut.trim(ver.distversion)
 		if wrtRelease ~= "" then
 			wrtRelease = "OpenWrt - " .. wrtRelease
 		else
 			wrtRelease = "OpenWrt - unknown"
 		end
-	local luciRelease = ut.trim(luci.version.luciversion)
+	local luciRelease = ut.trim(ver.luciversion)
 		if luciRelease ~= "" then
 			luciRelease = "\nLuCI - " .. luciRelease
 		else
@@ -266,6 +272,13 @@ function troubleshootingData()
 		end
 	mArray.netconfig = { networkConfig }
 
+	-- wireless config
+	local wirelessConfig = ut.trim(sys.exec("cat /etc/config/wireless | sed -e 's/.*username.*/	USERNAME HIDDEN/' -e 's/.*password.*/	PASSWORD HIDDEN/' -e 's/.*key.*/	KEY HIDDEN/'"))
+		if wirelessConfig == "" then
+			wirelessConfig = "No data found"
+		end
+	mArray.wificonfig = { wirelessConfig }
+	
 	-- ifconfig
 	local ifconfig = ut.trim(sys.exec("ifconfig"))
 		if ifconfig == "" then
@@ -281,17 +294,17 @@ function troubleshootingData()
 	mArray.routeshow = { routeShow }
 
 	-- ip rule show
-	local ipRuleShow = ut.trim(sys.exec("ip rule show"))
+	local ipRuleShow = ut.trim(sys.exec(ip .. "rule show"))
 		if ipRuleShow == "" then
 			ipRuleShow = "No data found"
 		end
 	mArray.iprule = { ipRuleShow }
 
 	-- ip route list table 1-250
-	local routeList, routeString = ut.trim(sys.exec("ip rule | sed 's/://g' | awk '$1>=2001 && $1<=2250' | awk '{print $NF}'")), ""
+	local routeList, routeString = ut.trim(sys.exec(ip .. "rule | sed 's/://g' | awk '$1>=2001 && $1<=2250' | awk '{print $NF}'")), ""
 		if routeList ~= "" then
 			for line in routeList:gmatch("[^\r\n]+") do
-				routeString = routeString .. line .. "\n" .. sys.exec("ip route list table " .. line)
+				routeString = routeString .. line .. "\n" .. sys.exec(ip .. "route list table " .. line)
 			end
 			routeString = ut.trim(routeString)
 		else
@@ -300,7 +313,7 @@ function troubleshootingData()
 	mArray.routelist = { routeString }
 
 	-- default firewall output policy
-	local firewallOut = ut.trim(sys.exec("uci get -p /var/state firewall.@defaults[0].output"))
+	local firewallOut = ut.trim(sys.exec("uci -p /var/state get firewall.@defaults[0].output"))
 		if firewallOut == "" then
 			firewallOut = "No data found"
 		end

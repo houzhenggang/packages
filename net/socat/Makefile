@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2006-2014 OpenWrt.org
+# Copyright (C) 2006-2015 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=socat
-PKG_VERSION:=1.7.2.4
-PKG_RELEASE:=2
+PKG_VERSION:=1.7.3.1
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.bz2
 PKG_SOURCE_URL:=http://www.dest-unreach.org/socat/download
-PKG_MD5SUM:=69b8155dd442a6f24e28ef5407d868eb
+PKG_MD5SUM:=d2da659540c38139f388e9437bfaae16bb458d174d056cb3228432a8f489fbaa
 
 PKG_MAINTAINER:= Ted Hess <thess@kitschensync.net>
 
@@ -27,7 +27,7 @@ include $(INCLUDE_DIR)/package.mk
 define Package/socat
   SECTION:=net
   CATEGORY:=Network
-  DEPENDS:=+libpthread +SOCAT_SSL:libopenssl
+  DEPENDS:=+libpthread +librt +SOCAT_SSL:libopenssl
   TITLE:=A multipurpose relay (SOcket CAT)
   URL:=http://www.dest-unreach.org/socat/
 endef
@@ -68,6 +68,9 @@ CONFIGURE_VARS += \
 	sc_cv_sys_crdly_shift=9 \
 	sc_cv_sys_tabdly_shift=11 \
 	sc_cv_sys_csize_shift=4
+
+TARGET_CFLAGS += \
+	-include stddef.h
 
 define Package/socat/install
 	$(INSTALL_DIR) $(1)/usr/bin
